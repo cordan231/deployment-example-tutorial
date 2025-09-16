@@ -1,8 +1,7 @@
 # Workflow name
-name: Build Docker
+name: Build Docker and Push to Registries
 
 # Run only on new tags being pushed
-# https://docs.github.com/en/actions/using-workflows/triggering-a-workflow
 on:
   push:
     tags:
@@ -13,26 +12,30 @@ jobs:
   build:
     # Run job on Ubuntu runner
     runs-on: ubuntu-latest
-
     # Job Steps
     steps:
       # Step 1 - Checkout the Repository
-      # https://github.com/actions/checkout
       - name: 1 - Checkout Repository
         uses: actions/checkout@v4
 
       # Step 2 - Log In to GitHub Container Registry
-      # https://github.com/docker/login-action
       - name: 2 - Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
-      # Step 3 - Build and Push Docker Image
-      # https://github.com/docker/build-push-action
-      - name: 3 - Build and Push Docker Image
+
+      # Step 3 - Log In to Azure Container Registry
+      - name: 3 - Login to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      # Step 4 - Build and Push Docker Image
+      - name: 4 - Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -40,10 +43,11 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:${{ github.ref_name }}
             ghcr.io/${{ github.repository }}:latest
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ github.repository_owner }}/deployment-example:${{ github.ref_name }}
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ github.repository_owner }}/deployment-example:latest
 
-      # Step 4 - Make Release on GitHub
-      # https://github.com/softprops/action-gh-release
-      - name: 4 - Release
+      # Step 5 - Make Release on GitHub
+      - name: 5 - Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

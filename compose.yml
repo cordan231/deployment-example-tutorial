@@ -8,7 +8,7 @@ services:
   example-deploy:
     
     # Docker Image
-    image: ghcr.io/cis526-codio/ex-deploy:latest
+    image: ghcr.io/cordan231/deployment-example-tutorial:latest
 
     # Container Name
     container_name: example-deploy
